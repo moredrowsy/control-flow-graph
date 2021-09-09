@@ -75,7 +75,7 @@ public class Parser {
         tokenizer.add("\\)", TokenStates.PAREN_CLOSE.ordinal());
         tokenizer.add("\\{", TokenStates.BRACE_OPEN.ordinal());
         tokenizer.add("\\}", TokenStates.BRACE_CLOSE.ordinal());
-        tokenizer.add("[^\\(\\)\\{\\}\\;]*", TokenStates.STATEMENT.ordinal());
+        tokenizer.add("[^\\(\\)\\{\\}\\;]+", TokenStates.STATEMENT.ordinal());
     }
 
     private void initStates() {
@@ -603,6 +603,9 @@ public class Parser {
                 FSMStates.FUNC_BRACE_OPEN.ordinal());
         // FUNC_START -> SEMICOLON -> FUNC_END
         addStateRules(FSMStates.FUNC_START.ordinal(), TokenStates.SEMICOLON.ordinal(),
+                FSMStates.FUNC_END.ordinal());
+        // FUNC_BRACE_OPEN -> BRACE_CLOSE -> FUNC_END
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
                 FSMStates.FUNC_END.ordinal());
         // FUNC_BRACE_OPEN -> SEMICOLON -> FUNC_STATEMENT
         addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.SEMICOLON.ordinal(),
@@ -1395,7 +1398,7 @@ public class Parser {
                     } else if (peekState == FSMStates.FUNC_END.ordinal()) {
                         // If peekState is END but state from pevious is BRACE_OPEN
                         // then there is empty body {}; create empty body node
-                        if (state == FSMStates.WHILE_BRACE_OPEN.ordinal()) {
+                        if (state == FSMStates.FUNC_BRACE_OPEN.ordinal()) {
                             Node<Integer> emptyNode = new Node<Integer>(walker.val + 1);
                             Token emptyToken =
                                     new Token(walker.tokens.get(walker.tokens.size() - 1).index,
