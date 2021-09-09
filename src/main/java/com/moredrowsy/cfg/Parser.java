@@ -31,6 +31,9 @@ public class Parser {
 
         // FOR LOOPS
         FOR_START, FOR_PAREN_OPEN, FOR_INIT, FOR_INIT_END, FOR_COND, FOR_COND_END, FOR_MODIFY, FOR_PAREN_CLOSE, FOR_BRACE_OPEN, FOR_STATEMENT, FOR_SINGLE_STATEMENT, FOR_END,
+
+        // FUNCTION STATES
+        FUNC_START, FUNC_BRACE_OPEN, FUNC_STATEMENT, FUNC_END,
     }
 
     private static enum DecompStates {
@@ -39,6 +42,7 @@ public class Parser {
         D1, D1_END, // IF-THEN-ELSE
         D2, D2_END, // WHILE-DO
         D3, D3_END, // DO-WHILE
+        F1, F1_END, // FUNCTION
         P1, // STATEMENT
     }
 
@@ -65,6 +69,8 @@ public class Parser {
         tokenizer.add("while", TokenStates.WHILE.ordinal());
         tokenizer.add("do", TokenStates.DO.ordinal());
         tokenizer.add("for", TokenStates.FOR.ordinal());
+        tokenizer.add("[^\\(\\)\\;\\{\\}]*[\\s]*[^\\(\\)\\;\\{\\}]+\\([^\\(\\)\\;\\{\\}]*\\)",
+                TokenStates.FUNCTION.ordinal());
         tokenizer.add("\\(", TokenStates.PAREN_OPEN.ordinal());
         tokenizer.add("\\)", TokenStates.PAREN_CLOSE.ordinal());
         tokenizer.add("\\{", TokenStates.BRACE_OPEN.ordinal());
@@ -91,6 +97,8 @@ public class Parser {
                 FSMStates.DO_WHILE_START.ordinal());
         addStateRules(FSMStates.INIT_START.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.FOR_START.ordinal());
+        addStateRules(FSMStates.INIT_START.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.FUNC_START.ordinal());
 
         // Mark Finite State Table
         initStatementStates();
@@ -98,6 +106,7 @@ public class Parser {
         initDoWhileStates();
         initIfStates();
         initForStates();
+        initFunctionStates();
     }
 
     private void initStatementStates() {
@@ -158,6 +167,9 @@ public class Parser {
         // WHILE_PAREN_CLOSE -> FOR -> WHILE_SINGLE_STATEMENT
         addStateRules(FSMStates.WHILE_PAREN_CLOSE.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.WHILE_SINGLE_STATEMENT.ordinal());
+        // WHILE_PAREN_CLOSE -> FUNCTION -> WHILE_SINGLE_STATEMENT
+        addStateRules(FSMStates.WHILE_PAREN_CLOSE.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.WHILE_SINGLE_STATEMENT.ordinal());
         // WHILE_SINGLE_STATEMENT -> LAMBDA -> WHILE_END
         addStateRules(FSMStates.WHILE_SINGLE_STATEMENT.ordinal(), TokenStates.LAMBDA.ordinal(),
                 FSMStates.WHILE_END.ordinal());
@@ -182,6 +194,9 @@ public class Parser {
         // WHILE_BRACE_OPEN -> FOR -> WHILE_STATEMENT
         addStateRules(FSMStates.WHILE_BRACE_OPEN.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.WHILE_STATEMENT.ordinal());
+        // WHILE_BRACE_OPEN -> FUNCTION -> WHILE_STATEMENT
+        addStateRules(FSMStates.WHILE_BRACE_OPEN.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.WHILE_STATEMENT.ordinal());
         // WHILE_STATEMENT -> SEMICOLON -> WHILE_STATEMENT
         addStateRules(FSMStates.WHILE_STATEMENT.ordinal(), TokenStates.SEMICOLON.ordinal(),
                 FSMStates.WHILE_STATEMENT.ordinal());
@@ -199,6 +214,9 @@ public class Parser {
                 FSMStates.WHILE_STATEMENT.ordinal());
         // WHILE_STATEMENT -> FOR -> WHILE_STATEMENT
         addStateRules(FSMStates.WHILE_STATEMENT.ordinal(), TokenStates.FOR.ordinal(),
+                FSMStates.WHILE_STATEMENT.ordinal());
+        // WHILE_STATEMENT -> FUNCTION -> WHILE_STATEMENT
+        addStateRules(FSMStates.WHILE_STATEMENT.ordinal(), TokenStates.FUNCTION.ordinal(),
                 FSMStates.WHILE_STATEMENT.ordinal());
         // WHILE_STATEMENT -> BRACE_CLOSE -> WHILE_END
         addStateRules(FSMStates.WHILE_STATEMENT.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
@@ -230,6 +248,9 @@ public class Parser {
         // DO_WHILE_BRACE_OPEN -> FOR -> DO_WHILE_STATEMENT
         addStateRules(FSMStates.DO_WHILE_BRACE_OPEN.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.DO_WHILE_STATEMENT.ordinal());
+        // DO_WHILE_BRACE_OPEN -> FUNCTION -> DO_WHILE_STATEMENT
+        addStateRules(FSMStates.DO_WHILE_BRACE_OPEN.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.DO_WHILE_STATEMENT.ordinal());
         // DO_WHILE_STATEMENT -> SEMICOLON -> DO_WHILE_STATEMENT
         addStateRules(FSMStates.DO_WHILE_STATEMENT.ordinal(), TokenStates.SEMICOLON.ordinal(),
                 FSMStates.DO_WHILE_STATEMENT.ordinal());
@@ -247,6 +268,9 @@ public class Parser {
                 FSMStates.DO_WHILE_STATEMENT.ordinal());
         // DO_WHILE_STATEMENT -> FOR -> DO_WHILE_STATEMENT
         addStateRules(FSMStates.DO_WHILE_STATEMENT.ordinal(), TokenStates.FOR.ordinal(),
+                FSMStates.DO_WHILE_STATEMENT.ordinal());
+        // DO_WHILE_STATEMENT -> FUNCTION -> DO_WHILE_STATEMENT
+        addStateRules(FSMStates.DO_WHILE_STATEMENT.ordinal(), TokenStates.FUNCTION.ordinal(),
                 FSMStates.DO_WHILE_STATEMENT.ordinal());
         // DO_WHILE_STATEMENT -> BRACE_CLOSE -> DO_WHILE_BRACE_CLOSE
         addStateRules(FSMStates.DO_WHILE_STATEMENT.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
@@ -316,6 +340,9 @@ public class Parser {
         // IF_PAREN_CLOSE -> FOR -> IF_THEN_SINGLE_STATEMENT
         addStateRules(FSMStates.IF_PAREN_CLOSE.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.IF_THEN_SINGLE_STATEMENT.ordinal());
+        // IF_PAREN_CLOSE -> FUNCTION -> IF_THEN_SINGLE_STATEMENT
+        addStateRules(FSMStates.IF_PAREN_CLOSE.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.IF_THEN_SINGLE_STATEMENT.ordinal());
         // IF_THEN_SINGLE_STATEMENT -> ELSE -> IF_ELSE
         addStateRules(FSMStates.IF_THEN_SINGLE_STATEMENT.ordinal(), TokenStates.ELSE.ordinal(),
                 FSMStates.IF_ELSE.ordinal());
@@ -343,6 +370,9 @@ public class Parser {
         // IF_THEN_BRACE_OPEN -> FOR -> IF_THEN_STATEMENT
         addStateRules(FSMStates.IF_THEN_BRACE_OPEN.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.IF_THEN_STATEMENT.ordinal());
+        // IF_THEN_BRACE_OPEN -> FUNCTION -> IF_THEN_STATEMENT
+        addStateRules(FSMStates.IF_THEN_BRACE_OPEN.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.IF_THEN_STATEMENT.ordinal());
         // IF_THEN_STATEMENT -> SEMICOLON -> IF_THEN_STATEMENT
         addStateRules(FSMStates.IF_THEN_STATEMENT.ordinal(), TokenStates.SEMICOLON.ordinal(),
                 FSMStates.IF_THEN_STATEMENT.ordinal());
@@ -360,6 +390,9 @@ public class Parser {
                 FSMStates.IF_THEN_STATEMENT.ordinal());
         // IF_THEN_STATEMENT -> FOR -> IF_THEN_STATEMENT
         addStateRules(FSMStates.IF_THEN_STATEMENT.ordinal(), TokenStates.FOR.ordinal(),
+                FSMStates.IF_THEN_STATEMENT.ordinal());
+        // IF_THEN_STATEMENT -> FUNCTION -> IF_THEN_STATEMENT
+        addStateRules(FSMStates.IF_THEN_STATEMENT.ordinal(), TokenStates.FUNCTION.ordinal(),
                 FSMStates.IF_THEN_STATEMENT.ordinal());
         // IF_THEN_STATEMENT -> BRACE_CLOSE -> IF_THEN_END
         addStateRules(FSMStates.IF_THEN_STATEMENT.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
@@ -397,6 +430,9 @@ public class Parser {
         // IF_ELSE -> FOR -> IF_ELSE_SINGLE_STATEMENT
         addStateRules(FSMStates.IF_ELSE.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.IF_ELSE_SINGLE_STATEMENT.ordinal());
+        // IF_ELSE -> FUNCTION -> IF_ELSE_SINGLE_STATEMENT
+        addStateRules(FSMStates.IF_ELSE.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.IF_ELSE_SINGLE_STATEMENT.ordinal());
         // IF_ELSE_SINGLE_STATEMENT -> LAMBDA -> IF_ELSE_END
         addStateRules(FSMStates.IF_ELSE_SINGLE_STATEMENT.ordinal(), TokenStates.LAMBDA.ordinal(),
                 FSMStates.IF_ELSE_END.ordinal());
@@ -424,6 +460,9 @@ public class Parser {
         // IF_ELSE_BRACE_OPEN -> FOR -> IF_ELSE_STATEMENT
         addStateRules(FSMStates.IF_ELSE_BRACE_OPEN.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.IF_ELSE_STATEMENT.ordinal());
+        // IF_ELSE_BRACE_OPEN -> FUNCTION -> IF_ELSE_STATEMENT
+        addStateRules(FSMStates.IF_ELSE_BRACE_OPEN.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.IF_ELSE_STATEMENT.ordinal());
         // IF_ELSE_STATEMENT -> SEMICOLON -> IF_ELSE_STATEMENT
         addStateRules(FSMStates.IF_ELSE_STATEMENT.ordinal(), TokenStates.SEMICOLON.ordinal(),
                 FSMStates.IF_ELSE_STATEMENT.ordinal());
@@ -441,6 +480,9 @@ public class Parser {
                 FSMStates.IF_ELSE_STATEMENT.ordinal());
         // IF_ELSE_STATEMENT -> FOR -> IF_ELSE_STATEMENT
         addStateRules(FSMStates.IF_ELSE_STATEMENT.ordinal(), TokenStates.FOR.ordinal(),
+                FSMStates.IF_ELSE_STATEMENT.ordinal());
+        // IF_ELSE_STATEMENT -> FUNCTION -> IF_ELSE_STATEMENT
+        addStateRules(FSMStates.IF_ELSE_STATEMENT.ordinal(), TokenStates.FUNCTION.ordinal(),
                 FSMStates.IF_ELSE_STATEMENT.ordinal());
         // IF_ELSE_STATEMENT -> BRACE_CLOSE -> IF_ELSE_END
         addStateRules(FSMStates.IF_ELSE_STATEMENT.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
@@ -496,6 +538,9 @@ public class Parser {
         // FOR_PAREN_CLOSE -> FOR -> FOR_SINGLE_STATEMENT
         addStateRules(FSMStates.FOR_PAREN_CLOSE.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.FOR_SINGLE_STATEMENT.ordinal());
+        // FOR_PAREN_CLOSE -> FUNCTION -> FOR_SINGLE_STATEMENT
+        addStateRules(FSMStates.FOR_PAREN_CLOSE.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.FOR_SINGLE_STATEMENT.ordinal());
         // FOR_SINGLE_STATEMENT -> LAMBDA -> FOR_END
         addStateRules(FSMStates.FOR_SINGLE_STATEMENT.ordinal(), TokenStates.LAMBDA.ordinal(),
                 FSMStates.FOR_END.ordinal());
@@ -523,6 +568,9 @@ public class Parser {
         // FOR_BRACE_OPEN -> FOR -> FOR_STATEMENT
         addStateRules(FSMStates.FOR_BRACE_OPEN.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.FOR_STATEMENT.ordinal());
+        // FOR_BRACE_OPEN -> FUNCTION -> FOR_STATEMENT
+        addStateRules(FSMStates.FOR_BRACE_OPEN.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.FOR_STATEMENT.ordinal());
         // FOR_STATEMENT -> SEMICOLON -> FOR_STATEMENT
         addStateRules(FSMStates.FOR_STATEMENT.ordinal(), TokenStates.SEMICOLON.ordinal(),
                 FSMStates.FOR_STATEMENT.ordinal());
@@ -541,9 +589,66 @@ public class Parser {
         // FOR_STATEMENT -> FOR -> FOR_STATEMENT
         addStateRules(FSMStates.FOR_STATEMENT.ordinal(), TokenStates.FOR.ordinal(),
                 FSMStates.FOR_STATEMENT.ordinal());
+        // FOR_STATEMENT -> FUNCTION -> FOR_STATEMENT
+        addStateRules(FSMStates.FOR_STATEMENT.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.FOR_STATEMENT.ordinal());
         // FOR_STATEMENT -> BRACE_CLOSE -> FOR_END
         addStateRules(FSMStates.FOR_STATEMENT.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
                 FSMStates.FOR_END.ordinal());
+    }
+
+    private void initFunctionStates() {
+        // FUNC_START -> BRACE_OPEN -> FUNC_BRACE_OPEN
+        addStateRules(FSMStates.FUNC_START.ordinal(), TokenStates.BRACE_OPEN.ordinal(),
+                FSMStates.FUNC_BRACE_OPEN.ordinal());
+        // FUNC_START -> SEMICOLON -> FUNC_END
+        addStateRules(FSMStates.FUNC_START.ordinal(), TokenStates.SEMICOLON.ordinal(),
+                FSMStates.FUNC_END.ordinal());
+        // FUNC_BRACE_OPEN -> SEMICOLON -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.SEMICOLON.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_BRACE_OPEN -> STATEMENT -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.STATEMENT.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_BRACE_OPEN -> IF -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.IF.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_BRACE_OPEN -> WHILE -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.WHILE.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_BRACE_OPEN -> DO -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.DO.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_BRACE_OPEN -> FOR -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.FOR.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_BRACE_OPEN -> FUNCTION -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_BRACE_OPEN.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> SEMICOLON -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.SEMICOLON.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> STATEMENT -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.STATEMENT.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> IF -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.IF.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> WHILE -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.WHILE.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> DO -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.DO.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> FOR -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.FOR.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> FUNCTION -> FUNC_STATEMENT
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.FUNCTION.ordinal(),
+                FSMStates.FUNC_STATEMENT.ordinal());
+        // FUNC_STATEMENT -> BRACE_CLOSE -> FUNC_END
+        addStateRules(FSMStates.FUNC_STATEMENT.ordinal(), TokenStates.BRACE_CLOSE.ordinal(),
+                FSMStates.FUNC_END.ordinal());
     }
 
     private String mapFSMStateToDecompState(int state) {
@@ -579,6 +684,11 @@ public class Parser {
                 return DecompStates.D0.name();
             return DecompStates.D0_END.name();
         }
+        if (state >= FSMStates.FUNC_START.ordinal() && state <= FSMStates.FUNC_END.ordinal()) {
+            if (state == FSMStates.FUNC_START.ordinal())
+                return DecompStates.F1.name();
+            return DecompStates.F1_END.name();
+        }
         return "";
     }
 
@@ -587,7 +697,8 @@ public class Parser {
                 || fsmState == FSMStates.IF_START.ordinal()
                 || fsmState == FSMStates.WHILE_START.ordinal()
                 || fsmState == FSMStates.DO_WHILE_START.ordinal()
-                || fsmState == FSMStates.FOR_START.ordinal();
+                || fsmState == FSMStates.FOR_START.ordinal()
+                || fsmState == FSMStates.FUNC_START.ordinal();
     }
 
     private void addStateRules(int startState, int input, int endState) {
@@ -671,6 +782,9 @@ public class Parser {
             return buildDoWhileTree(root, tokens);
         if (startState == FSMStates.FOR_START.ordinal())
             return buildForLoopTree(root, tokens);
+        if (startState == FSMStates.FUNC_START.ordinal())
+            return buildFunctionTree(root, tokens);
+
         return root;
     }
 
@@ -1195,6 +1309,8 @@ public class Parser {
                         end_node.tokens.add(token);
                         end_node.type = mapFSMStateToDecompState(peekState);
                         nodes.add(end_node);
+
+                        break;
                     } else {
                         token = tokens.poll();
                         walker.tokens.add(token);
@@ -1242,4 +1358,104 @@ public class Parser {
         }
         return root;
     }
+
+    private Node<Integer> buildFunctionTree(Node<Integer> root, LinkedList<Token> tokens) {
+        if (root != null) {
+            Token token = tokens.poll();
+            int input = token.type;
+            int state = states[FSMStates.INIT_START.ordinal()][input];
+            boolean isStartState = state == FSMStates.FUNC_START.ordinal();
+
+            // Exit if state is invalid start state
+            if (!isStartState)
+                return root;
+
+            // Create first node
+            Node<Integer> start_node = new Node<Integer>(root.val + 1);
+            start_node.tokens.add(token);
+            start_node.type = mapFSMStateToDecompState(state); // Store DecompStates at root
+            start_node.parents.add(root);
+            root.children.add(start_node);
+
+            nodes.add(start_node); // Store created nodes for final list
+
+            // Create walker and previous state
+            Node<Integer> walker = start_node; // Walker will be used to link next nodes
+            Node<Integer> end_node = null;
+            boolean isSuccess = false;
+
+            while (!tokens.isEmpty()) {
+                Token peekToken = tokens.peek();
+                int peekInput = peekToken.type;
+                int peekState = states[state][peekInput];
+
+                if (peekState != FSMStates.ERROR.ordinal()) {
+                    if (peekState == FSMStates.FUNC_STATEMENT.ordinal()) {
+                        walker = buildTRee(walker, tokens, null);
+                    } else if (peekState == FSMStates.FUNC_END.ordinal()) {
+                        // If peekState is END but state from pevious is BRACE_OPEN
+                        // then there is empty body {}; create empty body node
+                        if (state == FSMStates.WHILE_BRACE_OPEN.ordinal()) {
+                            Node<Integer> emptyNode = new Node<Integer>(walker.val + 1);
+                            Token emptyToken =
+                                    new Token(walker.tokens.get(walker.tokens.size() - 1).index,
+                                            DecompStates.P1.ordinal(), "");
+                            emptyNode.tokens.add(emptyToken);
+                            emptyNode.type = DecompStates.P1.name();
+                            emptyNode.parents.add(walker);
+                            walker.children.add(emptyNode);
+                            nodes.add(emptyNode);
+
+                            walker = emptyNode;
+                        }
+
+                        token = tokens.poll();
+
+                        // If function is a statement, ie ends in a SEMICOLOn like x = get();
+                        // Then change type to STATEMENT
+                        // And merge it with start_node
+                        if (token.type == TokenStates.SEMICOLON.ordinal()) {
+                            start_node.type = DecompStates.P1.name();
+                            start_node.tokens.add(token);
+                            end_node = start_node;
+                        } else {
+                            end_node = new Node<Integer>(walker.val + 1);
+                            end_node.tokens.add(token);
+                            end_node.type = mapFSMStateToDecompState(peekState);
+                            end_node.parents.add(walker);
+                            walker.children.add(end_node);
+                            nodes.add(end_node);
+                        }
+
+                        isSuccess = true;
+                        break;
+                    } else {
+                        token = tokens.poll();
+                        walker.tokens.add(token);
+                    }
+                }
+                // If error, exit;
+                else {
+                    if (isSuccess)
+                        break;
+
+                    System.out.println("There was an error parsing the grammar for (" + walker.type
+                            + ") token: " + walker.tokens.get(0));
+                    return walker;
+                }
+                state = peekState;
+            }
+
+            // Error, exit;
+            if (end_node == null) {
+                System.out.println("There was an error parsing the grammar for (" + walker.type
+                        + ") token: " + walker.tokens.get(0));
+                return walker;
+            }
+
+            return end_node;
+        }
+        return root;
+    }
+
 }
