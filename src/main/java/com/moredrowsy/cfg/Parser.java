@@ -42,8 +42,7 @@ public class Parser {
         D1, D1_END, // IF-THEN-ELSE
         D2, D2_END, // WHILE-DO
         D3, D3_END, // DO-WHILE
-        F1, F1_END, // FUNCTION
-        P1, // STATEMENT
+        P1, P1_END// STATEMENT
     }
 
     private Tokenizer tokenizer; // Tokenize the strings
@@ -689,8 +688,8 @@ public class Parser {
         }
         if (state >= FSMStates.FUNC_START.ordinal() && state <= FSMStates.FUNC_END.ordinal()) {
             if (state == FSMStates.FUNC_START.ordinal())
-                return DecompStates.F1.name();
-            return DecompStates.F1_END.name();
+                return DecompStates.P1.name();
+            return DecompStates.P1_END.name();
         }
         return "";
     }

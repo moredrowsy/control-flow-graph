@@ -40,21 +40,20 @@ public class App {
 
         System.out.println("\n\nVertices:");
         for (Node<Integer> node : nodes) {
-            System.out.println(node);
+            System.out.println("Node: " + node.val);
+            System.out.println("Type: " + node.type);
+            for (Token token : node.tokens) {
+                System.out.println(token.sequence);
+            }
+            System.out.println();
+        }
+        System.out.println();
 
-            System.out.println("\tchildren:");
+        System.out.println("Edges:");
+        for (Node<Integer> node : nodes) {
             for (Node<Integer> child : node.children) {
-                System.out.println("\t\t" + child);
+                System.out.println(node.val + " --> " + child.val);
             }
-            if (node.children.size() == 0)
-                System.out.println("\t\tNone");
-
-            System.out.println("\tparents:");
-            for (Node<Integer> parent : node.parents) {
-                System.out.println("\t\t" + parent);
-            }
-            if (node.parents.size() == 0)
-                System.out.println("\t\tNone");
         }
     }
 }
