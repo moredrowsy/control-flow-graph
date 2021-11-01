@@ -1276,7 +1276,12 @@ public class Parser {
 
                         // Change to newest val so descendants are using newest node value index
                         forCond.val = walker.val;
-                        walker = buildTRee(forCond, tokens, null); // Recurse using forCond
+
+                        if (forBodyLastWalker != null)
+                            walker = buildTRee(forBodyLastWalker, tokens, null); // Recurse using
+                                                                                 // last walker
+                        else
+                            walker = buildTRee(forCond, tokens, null); // Recurse using forCond
 
                         // Restore old value
                         forCond.val = oldForCondVal;
